@@ -29,7 +29,7 @@ int main() {
         if (comm == "add") {
             cout << "Введите имя и фамилию (через пробел): ";
             cin >> employee.firstName >> employee.lastName;
-            cout << "Использовать текущую выдачи ? (y/n): ";
+            cout << "Использовать текущую дату выдачи ? (y/n): ";
             cin >> yes;
             if (yes == 'y') {
                 getDateFromNow(employee);
