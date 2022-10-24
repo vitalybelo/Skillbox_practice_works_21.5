@@ -1,78 +1,57 @@
-#include <iostream>
 #include <windows.h>
-#include <cmath>
+#include <iostream>
+#include <random>
 using namespace std;
 
-struct VectorXY {
-    float x = 0.0;
-    float y = 0.0;
+struct GamePerson {
+    string name = "Mario";  // имя персонажа
+    int life = 150;         // уровень жизни, изначально 50 - 150
+    int armor = 50;         // уровень брони, изначально 0 - 50
+    int damage = 30;        // уровень наносимого врагам ущерба, изначально 10-30
+    int x = 0;
+    int y = 0;
 };
 
-string getCommand ();
-VectorXY getVectorInput (const string& title);
+GamePerson createEnemies (int number);
+
+void displayBattleField (GamePerson &hero, GamePerson enemy[], int enemyCount) {
+
+    cout << hero.name << " -> L: " << hero.life << " A: " << hero.armor << endl;
+
+
+
+}
 
 int main() {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
     setlocale(LC_ALL, "RUS");
 
-    string comm;
-    do {
-        comm = getCommand();
-        if (comm == "add") {
+    int enemyNumbers = 5;
+    GamePerson myHero {"Iron Man",150, 50,20,9,9};
+    GamePerson enemy[enemyNumbers];
 
-            cout << "Сложение 2х векторов Ax,Ay + Bx,By:\n";
-            auto a = getVectorInput("\tВведите координаты 1-го вектора (Ax,Ay) через пробел: ");
-            auto b = getVectorInput("\tВведите координаты 2-го вектора (Bx,By) через пробел: ");
-            cout << "\tРезультат А + В = ( " << (a.x + b.x) << " , " << (a.y + b.y) << " )\n";
-        } else if (comm == "sub") {
+    for (int i = 0; i < enemyNumbers; i++)
+            enemy[i] = createEnemies(i);
 
-            cout << "Вычитание 2х векторов Ax,Ay - Bx,By:\n";
-            auto a = getVectorInput("\tВведите координаты 1-го вектора (Ax,Ay) через пробел: ");
-            auto b = getVectorInput("\tВведите координаты 2-го вектора (Bx,By) через пробел: ");
-            cout << "\tРезультат А - В = ( " << (a.x - b.x) << " , " << (a.y - b.y) << " )\n";
-        } else if (comm == "scale") {
+    displayBattleField(myHero, enemy, enemyNumbers);
 
-            cout << "Умножение вектора Ax,Ay на скаляр B:\n";
-            auto a = getVectorInput("\tВведите координаты вектора (Ax,Ay) через пробел: ");
-            cout << "\tВведите значение скаляра Bx (float): ";
-            float b; cin >> b;
-            cout << "\tРезультат Аx,Ay * В = ( " << (a.x * b) << " , " << (a.y * b) << " )\n";
-        } else if (comm == "length") {
-
-            cout << "Вычисление длины вектора Ax,Ay:\n";
-            auto a = getVectorInput("\tВведите координаты вектора (Ax,Ay) через пробел: ");
-            auto length = sqrtf(powf(a.x,2) + powf(a.y,2));
-            cout << "\tДлина вектора ( " << a.x << " , " << a.y << " ) = " << length << endl;
-        } else if (comm == "normalize") {
-
-            cout << "Нормализация вектора Ax,Ay:\n";
-            auto a = getVectorInput("\tВведите координаты вектора (Ax,Ay) через пробел: ");
-            auto length = sqrtf(powf(a.x,2) + powf(a.y,2));
-            auto ax = a.x / length;
-            auto ay = a.y / length;
-            cout << "\tНормализованный вектор ( " << a.x << "/" << length;
-            cout << ", " << a.y << "/" << length << " ) = ( " << ax << ", " << ay << " )\n";
-        }
-    } while (comm != "quit");
 
 
     return 0;
 }
 
-string getCommand () {
-    string command;
-    cout << "\nВведите команду (add | sub | scale | length | normalize | quit): ";
-    cin >> command;
-    for (char & i : command) {
-        i = (char) tolower(i);
-    }
-    return command;
-}
+GamePerson createEnemies (int number) {
+    random_device rd;
+    mt19937 gen(rd());
 
-VectorXY getVectorInput (const string& title) {
-    VectorXY a;
-    cout << title;
-    cin >> a.x >> a.y;
-    return a;
+    GamePerson gp;
+    gp.name = "Enemy #" + to_string(number);
+    gp.life = int (50 + gen() % 100);
+    gp.armor = int (gen() % 50);
+    gp.damage = int (10 + gen() % 20);
+    gp.x = int (gen() % 19);
+    gp.y = int (gen() % 19);
+
+    return gp;
 }
