@@ -27,7 +27,6 @@ struct GamePerson {
 };
 
 GamePerson createEnemy (const int& index);
-
 void displayHelp ();
 bool validKey (const char &a);
 void displayPersonData (GamePerson &p);
@@ -35,100 +34,22 @@ void createBattleField (GamePerson p[], int enemyCount);
 void displayBattleField (GamePerson person[], int enemyCount);
 void writePersons(GamePerson p[], const int& enemyCount);
 void readPersons(GamePerson p[], const int& enemyCount);
+void strikeGamePerson (GamePerson &striker, GamePerson &victim);
+void movePerson(GamePerson p[], const int index, const char direct);
+void moveEnemies(GamePerson p[], int enemyCount);
+bool gameIsOver (GamePerson p[], int enemyCount);
 
-void strikeGamePerson (GamePerson &striker, GamePerson &victim) {
-    victim.armor -= striker.damage;
-    if (victim.armor < 0) {
-        victim.life += victim.armor;
-        victim.armor = 0;
-    }
-    if (victim.life <= 0) {
-        victim.alive = false;
-        field[victim.y][victim.x] = FREE_CELL;
-    }
-    victim.stuck = true;
-}
-
-void movePerson(GamePerson p[], const int index, const char direct) {
-
-    // выходим если игрок выбыл из игры
-    if (!p[index].alive) return;
-    // если игрок должен пропустить ход, обнул€ем пропуск и выходим
-    if (p[index].stuck) {
-        p[index].stuck = false;
-        return;
-    }
-
-    int sizeY = SIZE_FY - 1;
-    int sizeX = SIZE_FX - 1;
-
-    // сохран€ем символ игрока (в символьном виде = от '0' до '’' (где х = количество игроков)
-    char ps = field[p[index].y][p[index].x];
-    field[p[index].y][p[index].x] = FREE_CELL;
-
-    // ¬ычисл€ем новую координату игрока
-    switch (direct) {
-        case 'a': // move left
-            if (p[index].x > 0 && field[p[index].y][p[index].x - 1] == FREE_CELL) p[index].x--;
-            break;
-        case 'd': // move right
-            if (p[index].x < sizeX && field[p[index].y][p[index].x + 1] == FREE_CELL) p[index].x++;
-            break;
-        case 'w': // move up
-            if (p[index].y > 0 && field[p[index].y - 1][p[index].x] == FREE_CELL) p[index].y--;
-            break;
-        case 's': // move down
-            if (p[index].y < sizeY && field[p[index].y + 1][p[index].x] == FREE_CELL) p[index].y++;
-            break;
-        default: return;
-    }
-
-    // ≈сли в результате хода игрок приблизилс€ к противнику (или наоборот) - fight
-    int px, py;
-    for (int y = -1; y <= 1; y++) {
-        py = p[index].y + y;
-        if (py < 0 || py > sizeY) continue;
-        for (int x = -1; x <= 1; x++) {
-            px = p[index].x + x;
-            if (x == 0 && y == 0) continue;
-            if (px < 0 || px > sizeX) continue;
-            char fs = field[py][px];
-            if (fs != FREE_CELL) {
-                bool friendlyFire = ps > '0' && fs > '0';
-                if (!friendlyFire) {
-                    cout << "\a";
-                    int dest = fs - '0';
-                    strikeGamePerson(p[index], p[dest]);
-                }
-            }
-        }
-    }
-    // возвращаем символ игрока на карту
-    field[p[index].y][p[index].x] = ps;
-}
-
-void moveEnemies(GamePerson p[], int enemyCount) {
-    random_device rd;
-    mt19937 gen(rd());
-    for (int i = 1; i <= enemyCount; i++) {
-        int move = int(gen() % 4);
-        switch (move) {
-            case 0: movePerson(p,i, 'a'); break;    // влево
-            case 1: movePerson(p,i, 'w'); break;    // вверх
-            case 2: movePerson(p,i, 'd'); break;    // вправо
-            case 3: movePerson(p,i, 's'); break;    // вниз
-            default: ;
-        }
-    }
-}
-
-bool gameIsOver (GamePerson p[], int enemyCount) {
-    if (!p[0].alive) return true;
-    for (int i = 1; i <= enemyCount; i++)
-        if (p[i].alive) return false;
-    return true;
-}
-
+/**
+ * јлгоритм такой:
+ *  аждый игрок по очереди делает ход. —начала ход делает положительный герой (игрок).
+ * «атем по очереди ход€т противники. ≈сли дела€ ход, игрок подходит к одному из противников,
+ * игрок наносит удар, при этом получивший удар противник пропускает следующий ход и тер€ет
+ * броню и/или жизнь на величину ущерба наносимого игроком (аналогично алгоритм работает против
+ * игрока).
+ * “актика: если игрок нанес удар, противник на один ход встает на паузу - продолжайте кружить
+ * вокруг противника, нанос€ удары пока тот не исчезнет с экрана (уничтожен виртуально).
+ * chit code: "god mode" - press key 'p' on keyboard during play to get freeze all enemies.
+ */
 int main() {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
@@ -304,4 +225,97 @@ void readPersons(GamePerson p[], const int& enemyCount) {
     } else {
         cerr << "File not found\n";
     }
+}
+
+void strikeGamePerson (GamePerson &striker, GamePerson &victim) {
+    victim.armor -= striker.damage;
+    if (victim.armor < 0) {
+        victim.life += victim.armor;
+        victim.armor = 0;
+    }
+    if (victim.life <= 0) {
+        victim.alive = false;
+        field[victim.y][victim.x] = FREE_CELL;
+    }
+    victim.stuck = true;
+}
+
+void movePerson(GamePerson p[], const int index, const char direct) {
+
+    // выходим если игрок выбыл из игры
+    if (!p[index].alive) return;
+    // если игрок должен пропустить ход, обнул€ем пропуск и выходим
+    if (p[index].stuck) {
+        p[index].stuck = false;
+        return;
+    }
+
+    int sizeY = SIZE_FY - 1;
+    int sizeX = SIZE_FX - 1;
+
+    // сохран€ем символ игрока (в символьном виде = от '0' до '’' (где х = количество игроков)
+    char ps = field[p[index].y][p[index].x];
+    field[p[index].y][p[index].x] = FREE_CELL;
+
+    // ¬ычисл€ем новую координату игрока
+    switch (direct) {
+        case 'a': // move left
+            if (p[index].x > 0 && field[p[index].y][p[index].x - 1] == FREE_CELL) p[index].x--;
+            break;
+        case 'd': // move right
+            if (p[index].x < sizeX && field[p[index].y][p[index].x + 1] == FREE_CELL) p[index].x++;
+            break;
+        case 'w': // move up
+            if (p[index].y > 0 && field[p[index].y - 1][p[index].x] == FREE_CELL) p[index].y--;
+            break;
+        case 's': // move down
+            if (p[index].y < sizeY && field[p[index].y + 1][p[index].x] == FREE_CELL) p[index].y++;
+            break;
+        default: return;
+    }
+
+    // ≈сли в результате хода игрок приблизилс€ к противнику (или наоборот) - fight
+    int px, py;
+    for (int y = -1; y <= 1; y++) {
+        py = p[index].y + y;
+        if (py < 0 || py > sizeY) continue;
+        for (int x = -1; x <= 1; x++) {
+            px = p[index].x + x;
+            if (x == 0 && y == 0) continue;
+            if (px < 0 || px > sizeX) continue;
+            char fs = field[py][px];
+            if (fs != FREE_CELL) {
+                bool friendlyFire = ps > '0' && fs > '0';
+                if (!friendlyFire) {
+                    cout << "\a";
+                    int dest = fs - '0';
+                    strikeGamePerson(p[index], p[dest]);
+                }
+            }
+        }
+    }
+    // возвращаем символ игрока на карту
+    field[p[index].y][p[index].x] = ps;
+}
+
+void moveEnemies(GamePerson p[], int enemyCount) {
+    random_device rd;
+    mt19937 gen(rd());
+    for (int i = 1; i <= enemyCount; i++) {
+        int move = int(gen() % 4);
+        switch (move) {
+            case 0: movePerson(p,i, 'a'); break;    // влево
+            case 1: movePerson(p,i, 'w'); break;    // вверх
+            case 2: movePerson(p,i, 'd'); break;    // вправо
+            case 3: movePerson(p,i, 's'); break;    // вниз
+            default: ;
+        }
+    }
+}
+
+bool gameIsOver (GamePerson p[], int enemyCount) {
+    if (!p[0].alive) return true;
+    for (int i = 1; i <= enemyCount; i++)
+        if (p[i].alive) return false;
+    return true;
 }

@@ -2,8 +2,6 @@
 #include <fstream>
 #include <random>
 #include <conio.h>
-#include <windows.h>
-
 using namespace std;
 
 // да простят меня боги за глобальные переменные - перекину потом в class .. аминь
@@ -14,7 +12,7 @@ const char FREE_CELL = '.';     // знак свободной клетки
 const char HERO_CELL = 'H';     // символ отображающая положение героя
 const char ENEMY_CELL = 'X';    // символ отображающая положение противников
 char field[SIZE_FY][SIZE_FX];   // игровое поле
-bool chit_enemy = false;        // режим good - все противники на паузе (в процессе игры жми 'p')
+bool chit_enemy = false;        // режим god - все противники замирают (в процессе игры жми 'p')
 
 struct GamePerson {
     string name = "Mario";      // имя персонажа
@@ -24,10 +22,10 @@ struct GamePerson {
     int x = 0;                  // координата на игровом поле X
     int y = 0;                  // координата на игровом поле Y
     bool alive = true;          // жив или не жив
+    bool stuck = false;         // флаг пропуска хода после поражения
 };
 
 GamePerson createEnemy (const int& index);
-
 void displayHelp ();
 bool validKey (const char &a);
 void displayPersonData (GamePerson &p);
@@ -35,84 +33,28 @@ void createBattleField (GamePerson p[], int enemyCount);
 void displayBattleField (GamePerson person[], int enemyCount);
 void writePersons(GamePerson p[], const int& enemyCount);
 void readPersons(GamePerson p[], const int& enemyCount);
+void strikeGamePerson (GamePerson &striker, GamePerson &victim);
+void movePerson(GamePerson p[], const int index, const char direct);
+void moveEnemies(GamePerson p[], int enemyCount);
+bool gameIsOver (GamePerson p[], int enemyCount);
 
-void strikeGamePerson (GamePerson striker, GamePerson victim) {
-
-
-
-}
-
-void movePerson(GamePerson &p, const char direct) {
-
-    char ps = field[p.y][p.x];
-    field[p.y][p.x] = FREE_CELL;
-
-    switch (direct) {
-        case 'a': // move left
-            if (p.x > 0 && field[p.y][p.x - 1] == FREE_CELL) p.x--;
-            break;
-        case 'd': // move right
-            if (p.x < (SIZE_FX - 1) && field[p.y][p.x + 1] == FREE_CELL) p.x++;
-            break;
-        case 'w': // move up
-            if (p.y > 0 && field[p.y - 1][p.x] == FREE_CELL) p.y--;
-            break;
-        case 's': // move down
-            if (p.y < (SIZE_FY - 1) && field[p.y + 1][p.x] == FREE_CELL) p.y++;
-            break;
-        default: return;
-    }
-
-    int px, py;
-    int sizeY = SIZE_FY - 1;
-    int sizeX = SIZE_FX - 1;
-
-    for (int y = -1; y <= 1; y++) {
-        py = p.y + y;
-        if (py < 0 || py > sizeY) continue;
-        for (int x = -1; x <= 1; x++) {
-            px = p.x + x;
-            if (x == 0 && y == 0) continue;
-            if (px < 0 || px > sizeX) continue;
-            char fs = field[py][px];
-            if (fs != FREE_CELL) {
-                bool friendlyFire = ps > '0' && fs > '0';
-                if (!friendlyFire) {
-                    cout << "\a";
-                    int i1 = ps - '0';
-                    int i2 = fs - '0';
-                    strikeGamePerson(i1, i2);
-                }
-            }
-        }
-    }
-    field[p.y][p.x] = ps;
-}
-
-void moveEnemies(GamePerson p[], int enemyCount) {
-    random_device rd;
-    mt19937 gen(rd());
-    for (int i = 1; i <= enemyCount; i++) {
-        int move = int(gen() % 4);
-        switch (move) {
-            case 0: movePerson(p[i], 'a'); break;    // влево
-            case 1: movePerson(p[i], 'w'); break;    // вверх
-            case 2: movePerson(p[i], 'd'); break;    // вправо
-            case 3: movePerson(p[i], 's'); break;    // вниз
-            default: ;
-        }
-    }
-}
-
-
+/**
+ * Алгоритм такой:
+ * Каждый игрок по очереди делает ход. Сначала ход делает положительный герой (игрок).
+ * Затем по очереди ходят противники. Если делая ход, игрок подходит к одному из противников,
+ * игрок наносит удар, при этом получивший удар противник пропускает следующий ход и теряет
+ * броню и/или жизнь на величину ущерба наносимого игроком (аналогично алгоритм работает против
+ * игрока).
+ * Тактика: если игрок нанес удар, противник на один ход встает на паузу - продолжайте кружить
+ * вокруг противника, нанося удары пока тот не исчезнет с экрана (уничтожен виртуально).
+ * chit code: "god mode" - press key 'p' on keyboard during play to get freeze all enemies.
+ */
 int main() {
-    SetConsoleCP(1251);
-    SetConsoleOutputCP(1251);
     setlocale(LC_ALL, "RUS");
 
     int enemyNumbers = 5;
     GamePerson person[enemyNumbers + 1];
-    person[0] = {"Galaxy Lord", 150, 50, 20, SIZE_FX / 2, SIZE_FY / 2};
+    person[0] = {"Galaxy Lord", 150, 150, 20, SIZE_FX / 2, SIZE_FY / 2};
 
     for (int i = 1; i <= enemyNumbers; i++)
         person[i] = createEnemy(i);
@@ -123,26 +65,34 @@ int main() {
     do {
         system("cls");
         displayBattleField(person, enemyNumbers);
-        while(kbhit()) _getch();    // clear buffer overflow cycling
+
+        if (gameIsOver(person, enemyNumbers)) {
+            cout << "\n\nGAME IS OVER\n";
+            system("pause");
+            break;
+        }
+        while(_kbhit()) _getch();    // clear buffer overflow cycling
         while (!_kbhit()) {         // look for press to instant read it
             comm = (char) tolower(_getch());
             if (validKey(comm)) break;
         }
         switch (comm) {
-            case 'i':  // load game
+            case 'i':   // load game
                 readPersons(person, enemyNumbers);
                 createBattleField(person, enemyNumbers);
                 break;
-            case 'o': case'u':  // save game
+            case 'o':   // save game
                 writePersons(person, enemyNumbers);
                 break;
-            case 'p':
+            case 'p':   // switch chit mode GOD
                 chit_enemy = !chit_enemy;
                 break;
-            default:
-                movePerson(person[0], comm);
+            case 'a': case 's': case 'd': case 'w':
+                movePerson(person, 0,comm);
                 if (!chit_enemy) moveEnemies(person, enemyNumbers);
                 break;
+            case 'u': break;
+            default: while(_kbhit()) _getch();
         }
     } while (comm != 'u');
 
@@ -174,7 +124,9 @@ void createBattleField (GamePerson p[], int enemyCount) {
     }
     // расставляем героев по местам
     for (int i = 0; i <= enemyCount; i++) {
-        field[p[i].y][p[i].x] = char(i + '0');
+        if (p[i].alive) {
+            field[p[i].y][p[i].x] = char(i + '0');
+        }
     }
 }
 
@@ -191,7 +143,7 @@ void displayPersonData (GamePerson &p) {
     if (p.alive) {
         cout << "\tL: " << p.life << "\tA: " << p.armor << "\tD: " << p.damage << endl;
     } else {
-        cout << "\t personage is DEAD" << endl;
+        cout << "\tpersonage is DEAD" << endl;
     }
 }
 
@@ -241,6 +193,7 @@ void writePersons(GamePerson p[], const int& enemyCount) {
             fileWriter.write((char *) &p[i].armor, sizeof(p[i].armor));
             fileWriter.write((char *) &p[i].damage, sizeof(p[i].damage));
             fileWriter.write((char *) &p[i].alive, sizeof(p[i].alive));
+            fileWriter.write((char *) &p[i].stuck, sizeof(p[i].stuck));
             fileWriter.write((char *) &p[i].x, sizeof(p[i].x));
             fileWriter.write((char *) &p[i].y, sizeof(p[i].y));
         }
@@ -261,6 +214,7 @@ void readPersons(GamePerson p[], const int& enemyCount) {
             fileReader.read((char *) &p[i].armor, sizeof(p[i].armor));
             fileReader.read((char *) &p[i].damage, sizeof(p[i].damage));
             fileReader.read((char *) &p[i].alive, sizeof(p[i].alive));
+            fileReader.read((char *) &p[i].stuck, sizeof(p[i].stuck));
             fileReader.read((char *) &p[i].x, sizeof(p[i].x));
             fileReader.read((char *) &p[i].y, sizeof(p[i].y));
         }
@@ -268,4 +222,97 @@ void readPersons(GamePerson p[], const int& enemyCount) {
     } else {
         cerr << "File not found\n";
     }
+}
+
+void strikeGamePerson (GamePerson &striker, GamePerson &victim) {
+    victim.armor -= striker.damage;
+    if (victim.armor < 0) {
+        victim.life += victim.armor;
+        victim.armor = 0;
+    }
+    if (victim.life <= 0) {
+        victim.alive = false;
+        field[victim.y][victim.x] = FREE_CELL;
+    }
+    victim.stuck = true;
+}
+
+void movePerson(GamePerson p[], const int index, const char direct) {
+
+    // выходим если игрок выбыл из игры
+    if (!p[index].alive) return;
+    // если игрок должен пропустить ход, обнуляем пропуск и выходим
+    if (p[index].stuck) {
+        p[index].stuck = false;
+        return;
+    }
+
+    int sizeY = SIZE_FY - 1;
+    int sizeX = SIZE_FX - 1;
+
+    // сохраняем символ игрока (в символьном виде = от '0' до 'Х' (где х = количество игроков)
+    char ps = field[p[index].y][p[index].x];
+    field[p[index].y][p[index].x] = FREE_CELL;
+
+    // Вычисляем новую координату игрока
+    switch (direct) {
+        case 'a': // move left
+            if (p[index].x > 0 && field[p[index].y][p[index].x - 1] == FREE_CELL) p[index].x--;
+            break;
+        case 'd': // move right
+            if (p[index].x < sizeX && field[p[index].y][p[index].x + 1] == FREE_CELL) p[index].x++;
+            break;
+        case 'w': // move up
+            if (p[index].y > 0 && field[p[index].y - 1][p[index].x] == FREE_CELL) p[index].y--;
+            break;
+        case 's': // move down
+            if (p[index].y < sizeY && field[p[index].y + 1][p[index].x] == FREE_CELL) p[index].y++;
+            break;
+        default: return;
+    }
+
+    // Если в результате хода игрок приблизился к противнику (или наоборот) - fight
+    int px, py;
+    for (int y = -1; y <= 1; y++) {
+        py = p[index].y + y;
+        if (py < 0 || py > sizeY) continue;
+        for (int x = -1; x <= 1; x++) {
+            px = p[index].x + x;
+            if (x == 0 && y == 0) continue;
+            if (px < 0 || px > sizeX) continue;
+            char fs = field[py][px];
+            if (fs != FREE_CELL) {
+                bool friendlyFire = ps > '0' && fs > '0';
+                if (!friendlyFire) {
+                    cout << "\a";
+                    int dest = fs - '0';
+                    strikeGamePerson(p[index], p[dest]);
+                }
+            }
+        }
+    }
+    // возвращаем символ игрока на карту
+    field[p[index].y][p[index].x] = ps;
+}
+
+void moveEnemies(GamePerson p[], int enemyCount) {
+    random_device rd;
+    mt19937 gen(rd());
+    for (int i = 1; i <= enemyCount; i++) {
+        int move = int(gen() % 4);
+        switch (move) {
+            case 0: movePerson(p,i, 'a'); break;    // влево
+            case 1: movePerson(p,i, 'w'); break;    // вверх
+            case 2: movePerson(p,i, 'd'); break;    // вправо
+            case 3: movePerson(p,i, 's'); break;    // вниз
+            default: ;
+        }
+    }
+}
+
+bool gameIsOver (GamePerson p[], int enemyCount) {
+    if (!p[0].alive) return true;
+    for (int i = 1; i <= enemyCount; i++)
+        if (p[i].alive) return false;
+    return true;
 }
