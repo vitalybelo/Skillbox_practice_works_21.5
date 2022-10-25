@@ -6,24 +6,24 @@
 
 using namespace std;
 
-// да простят меня боги за глобальные переменные - перекину потом в class .. аминь
+// РґР° РїСЂРѕСЃС‚СЏС‚ РјРµРЅСЏ Р±РѕРіРё Р·Р° РіР»РѕР±Р°Р»СЊРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ - РїРµСЂРµРєРёРЅСѓ РїРѕС‚РѕРј РІ class .. Р°РјРёРЅСЊ
 const string fileName = "../data/save-game.bin";
-const int SIZE_FX = 18;         // размер поля по горизонтали
-const int SIZE_FY = 10;         // размер поля по вертикали
-const char FREE_CELL = '.';     // знак свободной клетки
-const char HERO_CELL = 'H';     // символ отображающая положение героя
-const char ENEMY_CELL = 'X';    // символ отображающая положение противников
-char field[SIZE_FY][SIZE_FX];   // игровое поле
-bool chit_enemy = false;        // режим good - все противники на паузе (в процессе игры жми 'p')
+const int SIZE_FX = 17;         // СЂР°Р·РјРµСЂ РїРѕР»СЏ РїРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»Рё
+const int SIZE_FY = 10;         // СЂР°Р·РјРµСЂ РїРѕР»СЏ РїРѕ РІРµСЂС‚РёРєР°Р»Рё
+const char FREE_CELL = '.';     // Р·РЅР°Рє СЃРІРѕР±РѕРґРЅРѕР№ РєР»РµС‚РєРё
+const char HERO_CELL = 'H';     // СЃРёРјРІРѕР» РѕС‚РѕР±СЂР°Р¶Р°СЋС‰Р°СЏ РїРѕР»РѕР¶РµРЅРёРµ РіРµСЂРѕСЏ
+const char ENEMY_CELL = 'X';    // СЃРёРјРІРѕР» РѕС‚РѕР±СЂР°Р¶Р°СЋС‰Р°СЏ РїРѕР»РѕР¶РµРЅРёРµ РїСЂРѕС‚РёРІРЅРёРєРѕРІ
+char field[SIZE_FY][SIZE_FX];   // РёРіСЂРѕРІРѕРµ РїРѕР»Рµ
+bool chit_enemy = false;        // СЂРµР¶РёРј good - РІСЃРµ РїСЂРѕС‚РёРІРЅРёРєРё РЅР° РїР°СѓР·Рµ (РІ РїСЂРѕС†РµСЃСЃРµ РёРіСЂС‹ Р¶РјРё 'p')
 
 struct GamePerson {
-    string name = "Mario";      // имя персонажа
-    int life = 150;             // уровень жизни, изначально 50 - 150
-    int armor = 50;             // уровень брони, изначально 0 - 50
-    int damage = 30;            // уровень наносимого врагам ущерба, изначально 10-30
-    int x = 0;                  // координата на игровом поле X
-    int y = 0;                  // координата на игровом поле Y
-    bool alive = true;          // жив или не жив
+    string name = "Mario";      // РёРјСЏ РїРµСЂСЃРѕРЅР°Р¶Р°
+    int life = 150;             // СѓСЂРѕРІРµРЅСЊ Р¶РёР·РЅРё, РёР·РЅР°С‡Р°Р»СЊРЅРѕ 50 - 150
+    int armor = 50;             // СѓСЂРѕРІРµРЅСЊ Р±СЂРѕРЅРё, РёР·РЅР°С‡Р°Р»СЊРЅРѕ 0 - 50
+    int damage = 30;            // СѓСЂРѕРІРµРЅСЊ РЅР°РЅРѕСЃРёРјРѕРіРѕ РІСЂР°РіР°Рј СѓС‰РµСЂР±Р°, РёР·РЅР°С‡Р°Р»СЊРЅРѕ 10-30
+    int x = 0;                  // РєРѕРѕСЂРґРёРЅР°С‚Р° РЅР° РёРіСЂРѕРІРѕРј РїРѕР»Рµ X
+    int y = 0;                  // РєРѕРѕСЂРґРёРЅР°С‚Р° РЅР° РёРіСЂРѕРІРѕРј РїРѕР»Рµ Y
+    bool alive = true;          // Р¶РёРІ РёР»Рё РЅРµ Р¶РёРІ
 };
 
 GamePerson createEnemy (const int& index);
@@ -68,10 +68,10 @@ void moveEnemies(GamePerson p[], int enemyCount) {
     for (int i = 1; i <= enemyCount; i++) {
         int move = int(gen() % 4);
         switch (move) {
-            case 0: movePerson(p[i], 'a'); break;    // влево
-            case 1: movePerson(p[i], 'w'); break;    // вверх
-            case 2: movePerson(p[i], 'd'); break;    // вправо
-            case 3: movePerson(p[i], 's'); break;    // вниз
+            case 0: movePerson(p[i], 'a'); break;    // РІР»РµРІРѕ
+            case 1: movePerson(p[i], 'w'); break;    // РІРІРµСЂС…
+            case 2: movePerson(p[i], 'd'); break;    // РІРїСЂР°РІРѕ
+            case 3: movePerson(p[i], 's'); break;    // РІРЅРёР·
         }
     }
 }
@@ -87,7 +87,7 @@ int main() {
     person[0] = {"Galaxy Lord", 150, 50, 20, SIZE_FX / 2, SIZE_FY / 2};
 
     for (int i = 1; i <= enemyNumbers; i++)
-            person[i] = createEnemy(i);
+        person[i] = createEnemy(i);
 
     createBattleField(person, enemyNumbers);
 
@@ -138,11 +138,11 @@ GamePerson createEnemy (const int& index) {
 
 void createBattleField (GamePerson p[], int enemyCount) {
 
-    // заполняем карту поля точками
+    // Р·Р°РїРѕР»РЅСЏРµРј РєР°СЂС‚Сѓ РїРѕР»СЏ С‚РѕС‡РєР°РјРё
     for (auto & y : field) {
         for (auto &x: y) x = FREE_CELL;
     }
-    // расставляем героев по местам
+    // СЂР°СЃСЃС‚Р°РІР»СЏРµРј РіРµСЂРѕРµРІ РїРѕ РјРµСЃС‚Р°Рј
     for (int i = 0; i <= enemyCount; i++) {
         field[p[i].y][p[i].x] = char(i + '0');
     }
@@ -166,20 +166,20 @@ void displayPersonData (GamePerson &p) {
 }
 
 void displayHelp () {
-    cout << "\nКоманды управления:\n";
-    cout << "A,W,S,D - перемещение по полю\n";
-    cout << "I - загрузить сохраненную игру\n";
-    cout << "O - сохранить текущую игру\n";
-    cout << "U - выход (с сохранением)\n";
+    cout << "\nРљРѕРјР°РЅРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ:\n";
+    cout << "A,W,S,D - РїРµСЂРµРјРµС‰РµРЅРёРµ РїРѕ РїРѕР»СЋ\n";
+    cout << "I - Р·Р°РіСЂСѓР·РёС‚СЊ СЃРѕС…СЂР°РЅРµРЅРЅСѓСЋ РёРіСЂСѓ\n";
+    cout << "O - СЃРѕС…СЂР°РЅРёС‚СЊ С‚РµРєСѓС‰СѓСЋ РёРіСЂСѓ\n";
+    cout << "U - РІС‹С…РѕРґ (СЃ СЃРѕС…СЂР°РЅРµРЅРёРµРј)\n";
 }
 
 void displayBattleField (GamePerson person[], int enemyCount) {
 
-    // отображаем параметры игроков
+    // РѕС‚РѕР±СЂР°Р¶Р°РµРј РїР°СЂР°РјРµС‚СЂС‹ РёРіСЂРѕРєРѕРІ
     for (int i = 0; i <= enemyCount; i++)
         displayPersonData(person[i]);
 
-    // отображаем карту в консоли
+    // РѕС‚РѕР±СЂР°Р¶Р°РµРј РєР°СЂС‚Сѓ РІ РєРѕРЅСЃРѕР»Рё
     char sign;
     cout << endl;
     for (int y = 0; y < SIZE_FY; y++) {
