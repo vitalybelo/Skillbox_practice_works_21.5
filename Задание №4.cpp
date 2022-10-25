@@ -8,7 +8,7 @@ using namespace std;
 
 // да простят меня боги за глобальные переменные - перекину потом в class .. аминь
 const string fileName = "../data/save-game.bin";
-const int SIZE_FX = 17;         // размер поля по горизонтали
+const int SIZE_FX = 18;         // размер поля по горизонтали
 const int SIZE_FY = 10;         // размер поля по вертикали
 const char FREE_CELL = '.';     // знак свободной клетки
 const char HERO_CELL = 'H';     // символ отображающая положение героя
@@ -29,19 +29,24 @@ struct GamePerson {
 GamePerson createEnemy (const int& index);
 
 void displayHelp ();
-void displayPersonData (GamePerson &p);
-void displayBattleField (GamePerson person[], int enemyCount);
 bool validKey (const char &a);
+void displayPersonData (GamePerson &p);
 void createBattleField (GamePerson p[], int enemyCount);
+void displayBattleField (GamePerson person[], int enemyCount);
 void writePersons(GamePerson p[], const int& enemyCount);
 void readPersons(GamePerson p[], const int& enemyCount);
 
-void movePerson(GamePerson &p, const char direct) {
-    int x = p.x;
-    int y = p.y;
-    char sign = field[p.y][p.x];
+void strikeGamePerson (GamePerson striker, GamePerson victim) {
 
+
+
+}
+
+void movePerson(GamePerson &p, const char direct) {
+
+    char ps = field[p.y][p.x];
     field[p.y][p.x] = FREE_CELL;
+
     switch (direct) {
         case 'a': // move left
             if (p.x > 0 && field[p.y][p.x - 1] == FREE_CELL) p.x--;
@@ -58,8 +63,30 @@ void movePerson(GamePerson &p, const char direct) {
         default: return;
     }
 
-    field[p.y][p.x] = sign;
+    int px, py;
+    int sizeY = SIZE_FY - 1;
+    int sizeX = SIZE_FX - 1;
 
+    for (int y = -1; y <= 1; y++) {
+        py = p.y + y;
+        if (py < 0 || py > sizeY) continue;
+        for (int x = -1; x <= 1; x++) {
+            px = p.x + x;
+            if (x == 0 && y == 0) continue;
+            if (px < 0 || px > sizeX) continue;
+            char fs = field[py][px];
+            if (fs != FREE_CELL) {
+                bool friendlyFire = ps > '0' && fs > '0';
+                if (!friendlyFire) {
+                    cout << "\a";
+                    int i1 = ps - '0';
+                    int i2 = fs - '0';
+                    strikeGamePerson(i1, i2);
+                }
+            }
+        }
+    }
+    field[p.y][p.x] = ps;
 }
 
 void moveEnemies(GamePerson p[], int enemyCount) {
@@ -72,6 +99,7 @@ void moveEnemies(GamePerson p[], int enemyCount) {
             case 1: movePerson(p[i], 'w'); break;    // вверх
             case 2: movePerson(p[i], 'd'); break;    // вправо
             case 3: movePerson(p[i], 's'); break;    // вниз
+            default: ;
         }
     }
 }
@@ -120,6 +148,8 @@ int main() {
 
     return 0;
 }
+
+
 
 GamePerson createEnemy (const int& index) {
     random_device rd;
@@ -185,13 +215,14 @@ void displayBattleField (GamePerson person[], int enemyCount) {
     for (int y = 0; y < SIZE_FY; y++) {
         cout << y + 1 << "\t";
         for (int x = 0; x < SIZE_FX; x++) {
-            sign = FREE_CELL;
-            if (field[y][x] == '0') {
-                sign = HERO_CELL;
-            } else if (field[y][x] > '0') {
-                sign = ENEMY_CELL;
-            }
-            cout << sign;
+            cout << field[y][x];
+//            sign = FREE_CELL;
+//            if (field[y][x] == '0') {
+//                sign = HERO_CELL;
+//            } else if (field[y][x] > '0') {
+//                sign = ENEMY_CELL;
+//            }
+//            cout << sign;
         }
         cout << endl;
     }
