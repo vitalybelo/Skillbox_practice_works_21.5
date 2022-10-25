@@ -167,14 +167,14 @@ void displayBattleField (GamePerson person[], int enemyCount) {
     for (int y = 0; y < SIZE_FY; y++) {
         cout << y + 1 << "\t";
         for (int x = 0; x < SIZE_FX; x++) {
-            cout << field[y][x];
-//            sign = FREE_CELL;
-//            if (field[y][x] == '0') {
-//                sign = HERO_CELL;
-//            } else if (field[y][x] > '0') {
-//                sign = ENEMY_CELL;
-//            }
-//            cout << sign;
+            sign = FREE_CELL;
+            if (field[y][x] == '0') {
+                sign = HERO_CELL;
+            } else if (field[y][x] > '0') {
+                sign = field[y][x];
+                //sign = ENEMY_CELL;
+            }
+            cout << sign;
         }
         cout << endl;
     }
