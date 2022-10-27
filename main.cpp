@@ -3,6 +3,7 @@
 #include <random>
 #include <conio.h>
 #include <windows.h>
+#include <string>
 using namespace std;
 
 // да простят меня боги за глобальные переменные - перекину потом в class .. аминь
@@ -55,7 +56,7 @@ int main() {
 //    SetConsoleOutputCP(1251);
     setlocale(LC_ALL, "RUS");
 
-    int enemyNumbers = 5;
+    const int enemyNumbers = 5;
     GamePerson person[enemyNumbers + 1];
     person[0] = {"Galaxy Lord", 150, 150, 20, SIZE_FX / 2, SIZE_FY / 2};
 
@@ -74,7 +75,7 @@ int main() {
             system("pause");
             break;
         }
-        while(_kbhit()) _getch();    // clear buffer overflow cycling
+        while(_kbhit()) _getch();   // clear buffer overflow cycling
         while (!_kbhit()) {         // look for press to instant read it
             comm = (char) tolower(_getch());
             if (validKey(comm)) break;
@@ -151,11 +152,11 @@ void displayPersonData (GamePerson &p) {
 }
 
 void displayHelp () {
-    cout << "\nКоманды управления:\n";
-    cout << "A,W,S,D - перемещение по полю\n";
-    cout << "I - загрузить сохраненную игру\n";
-    cout << "O - сохранить текущую игру\n";
-    cout << "U - выход (с сохранением)\n";
+    cout << "\nControls:\n";
+    cout << "A,W,S,D - move on field\n";
+    cout << "I - load game\n";
+    cout << "O - save game\n";
+    cout << "U - quit\n";
 }
 
 void displayBattleField (GamePerson person[], int enemyCount) {
