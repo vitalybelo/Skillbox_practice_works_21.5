@@ -36,7 +36,7 @@ void displayBattleField (GamePerson person[], int enemyCount);
 void writePersons(GamePerson p[], const int& enemyCount);
 void readPersons(GamePerson p[], const int& enemyCount);
 void strikeGamePerson (GamePerson &striker, GamePerson &victim);
-void movePerson(GamePerson p[], const int index, const char direct);
+void movePerson(GamePerson p[], int index, char direct);
 void moveEnemies(GamePerson p[], int enemyCount);
 bool gameIsOver (GamePerson p[], int enemyCount);
 
